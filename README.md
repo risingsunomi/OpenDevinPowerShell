@@ -3,7 +3,7 @@ Collection of PowerShell scripts for [OpenDevin](https://github.com/OpenDevin/Op
 See [OpenDevin Requirements](https://github.com/OpenDevin/OpenDevin?tab=readme-ov-file#-get-started)
 
 ## Issues
-### Currrent (4/6/2024) Known Issues
+### Current Known Issues (as of 4/6/2024)
 - Workspace dir needs to be the full path. Pathlib doesn't work well with "./workspace" on Windows
 - You will need to change directory manually back to where the PS scripts are if you CRTL-C the frontend or backend
 - Working on a way to start both
