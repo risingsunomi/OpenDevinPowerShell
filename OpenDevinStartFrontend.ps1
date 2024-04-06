@@ -1,6 +1,6 @@
 Write-Host @"
 ###############################################
-#          OpenDevin Start Front End          #
+#          OpenDevin Start Frontend           #
 #                                             #
 #        Created for Windows 10 and 11        #
 #                                             #
