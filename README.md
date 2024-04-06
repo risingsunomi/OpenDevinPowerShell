@@ -7,7 +7,7 @@ See [OpenDevin Requirements](https://github.com/OpenDevin/OpenDevin?tab=readme-o
 - Workspace dir needs to be the full path. Pathlib doesn't work well with "./workspace" on Windows
 - You will need to change directory manually back to where the PS scripts are if you CRTL-C the frontend or backend
 - Working on a way to start both
-- *Requires Admin Privledges to run the install script due to corepack and npm*
+- **Requires Admin Privledges to run the install script due to corepack and npm**
 
 ## Contribute
 Feel free to open a PR or Issue to make this script better 🚀
