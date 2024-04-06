@@ -15,4 +15,5 @@ Feel free to open a PR or Issue to make this script better 🚀
 
 ## Links
 [OpenDevin](https://github.com/OpenDevin/OpenDevin)
+
 [CWBD discord](https://discord.gg/canwebeatdevin)
