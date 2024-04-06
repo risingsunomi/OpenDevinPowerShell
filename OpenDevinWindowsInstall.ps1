@@ -100,18 +100,9 @@ LLM_API_VERSION=`"$llmApiVersion`"
 LLM_BASE_URL=`"$llmBaseUrl`""
 })
 
-"@ | Out-File -FilePath $configFile
+"@ | Out-File -FilePath $configFile -Encoding utf8
 
 Write-Host "`n"
-
-# Check if Docker daemon is running
-try {
-    docker info > $null 2>&1
-}
-catch {
-    Write-Host "Docker daemon is not running. Please start the Docker daemon or check your Docker installation." -ForegroundColor Red
-    Exit 1
-}
 
 # Pull the Docker image
 Write-Host "Pulling docker image ghcr.io/opendevin/sandbox`n" -ForegroundColor Green
@@ -137,9 +128,8 @@ Write-Host "Setting up frontend" -ForegroundColor Green
 Set-Location frontend
 
 # Check if package-lock.json exists
-if (Test-Path -Path "package-lock.json") {
+if (Test-Path -Path "package-lock.json" -and Test-Path -Path "node_modules") {
     Write-Host "`nThis project currently uses 'pnpm' for dependency management. It has detected that dependencies were previously installed using 'npm' and has automatically deleted the 'node_modules' directory to prevent unnecessary conflicts.`n" -ForegroundColor DarkYellow
-    Remove-Item -Path "node_modules" -Recurse -Force
 }
 
 # Check if npm corepack is installed

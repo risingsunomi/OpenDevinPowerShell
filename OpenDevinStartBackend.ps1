@@ -53,6 +53,15 @@ $env:LLM_API_KEY = $config.LLM_API_KEY
 $env:WORKSPACE_DIR = $config.WORKSPACE_DIR
 $env:LLM_EMBEDDING_MODEL = $config.LLM_EMBEDDING_MODEL
 
+# Check if Docker daemon is running
+# backend controller will crash if docker is not running
+try {
+    docker info > $null 2>&1
+} catch {
+    Write-Host "Docker daemon is not running. Please start the Docker daemon or check your Docker installation. Exiting" -ForegroundColor Red
+    exit
+}
+
 # start wsgi backend
 Write-Host "Starting OpenDevin backend server" -ForegroundColor Green
 poetry run uvicorn opendevin.server.listen:app --port $backendPort
