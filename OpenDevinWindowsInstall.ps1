@@ -78,10 +78,6 @@ elseif ($llmEmbeddingModel -eq "azureopenai") {
 Write-Host "Enter your workspace directory or leave blank"
 Write-Host "For windows, please specify the full path"
 $workspaceDir = Read-Host "> "
-$workspaceDir = ($workspaceDir | Where-Object { $_ -eq "" })
-if($null -eq $workspaceDir -or $workspaceDir -eq "") {
-    $workspaceDir = $defaultWorkspaceDir
-}
 
 $configFile = "config.toml"
 @"
@@ -100,7 +96,7 @@ LLM_API_VERSION=`"$llmApiVersion`"
 LLM_BASE_URL=`"$llmBaseUrl`""
 })
 
-"@ | Out-File -FilePath $configFile -Encoding utf8
+"@ | Out-File -FilePath $configFile -Encoding UTF8NoBOM
 
 Write-Host "`n"
 
@@ -128,8 +124,11 @@ Write-Host "Setting up frontend" -ForegroundColor Green
 Set-Location frontend
 
 # Check if package-lock.json exists
-if (Test-Path -Path "package-lock.json" -and Test-Path -Path "node_modules") {
+if (Test-Path -Path "package-lock.json") {
     Write-Host "`nThis project currently uses 'pnpm' for dependency management. It has detected that dependencies were previously installed using 'npm' and has automatically deleted the 'node_modules' directory to prevent unnecessary conflicts.`n" -ForegroundColor DarkYellow
+    if (Test-Path -Path "node_modules") {
+        Remove-Item -Path "node_modules" -Recurse -Force
+    }
 }
 
 # Check if npm corepack is installed
@@ -149,8 +148,8 @@ Set-ExecutionPolicy RemoteSigned -Scope Process -Force
 
 # Install dependencies using pnpm and run make-i18n
 Write-Host "Running pnpm install and run make-i18n`n" -ForegroundColor Green
-pnpm install
-pnpm run make-i18n
+npm install
+npm run make-i18n
 Write-Host "`n"
 
 Write-Host "Installation of OpenDevin Completed" -ForegroundColor Green

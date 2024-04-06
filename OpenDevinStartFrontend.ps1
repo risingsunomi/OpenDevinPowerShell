@@ -53,6 +53,6 @@ $env:FRONTEND_POST = $frontendPort
 # Run the command
 Write-Host "Starting frontend" -ForegroundColor Green
 Set-Location "frontend"
-pnpm run start
+npm run start
 
 Set-Location $PSScriptRoot
