@@ -1,5 +1,6 @@
 # OpenDevin PowerShell
-Collection of PowerShell scripts for [OpenDevin](https://github.com/OpenDevin/OpenDevin) geared towards running on Windows 10 and Windows 11
+Collection of PowerShell scripts for running [OpenDevin](https://github.com/OpenDevin/OpenDevin) geared towards Windows 10 and Windows 11
+
 See [OpenDevin Requirements](https://github.com/OpenDevin/OpenDevin?tab=readme-ov-file#-get-started)
 
 ## Issues
