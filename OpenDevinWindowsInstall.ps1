@@ -75,8 +75,9 @@ elseif ($llmEmbeddingModel -eq "azureopenai") {
     $llmApiVersion = Read-Host "Enter the Azure API Version"
 }
 
-$defaultWorkspaceDir = "./workspace"
-$workspaceDir = Read-Host "Enter your workspace directory [default: $defaultWorkspaceDir]"
+Write-Host "Enter your workspace directory or leave blank"
+Write-Host "For windows, please specify the full path"
+$workspaceDir = Read-Host "> "
 $workspaceDir = ($workspaceDir | Where-Object { $_ -eq "" })
 if($null -eq $workspaceDir -or $workspaceDir -eq "") {
     $workspaceDir = $defaultWorkspaceDir
@@ -87,18 +88,30 @@ $configFile = "config.toml"
 LLM_MODEL="$llmModel"
 LLM_API_KEY="$llmApiKey"
 LLM_EMBEDDING_MODEL="$llmEmbeddingModel"
-WORKSPACE_DIR="$workspaceDir"
+$(if($workspaceDir -ne "" -or $null -ne $workspaceDir) {
+    "WORKSPACE_DIR=`"$workspaceDir`""
+})
 $(if ($llmEmbeddingModel -eq "llama2" -or $llmEmbeddingModel -eq "azureopenai") {
     "LLM_BASE_URL=`"$llmBaseUrl`""
 })
 $(if ($llmEmbeddingModel -eq "azureopenai") {
     "LLM_DEPLOYMENT_NAME=`"$llmDeploymentName`"
-LLM_API_VERSION=`"$llmApiVersion`""
+LLM_API_VERSION=`"$llmApiVersion`"
+LLM_BASE_URL=`"$llmBaseUrl`""
 })
 
 "@ | Out-File -FilePath $configFile
 
 Write-Host "`n"
+
+# Check if Docker daemon is running
+try {
+    docker info > $null 2>&1
+}
+catch {
+    Write-Host "Docker daemon is not running. Please start the Docker daemon or check your Docker installation." -ForegroundColor Red
+    Exit 1
+}
 
 # Pull the Docker image
 Write-Host "Pulling docker image ghcr.io/opendevin/sandbox`n" -ForegroundColor Green
@@ -125,7 +138,7 @@ Set-Location frontend
 
 # Check if package-lock.json exists
 if (Test-Path -Path "package-lock.json") {
-    Write-Host "`nThis project currently uses 'pnpm' for dependency management. It has detected that dependencies were previously installed using 'npm' and has automatically deleted the 'node_modules' directory to prevent unnecessary conflicts.`n" -ForegroundColor Orange
+    Write-Host "`nThis project currently uses 'pnpm' for dependency management. It has detected that dependencies were previously installed using 'npm' and has automatically deleted the 'node_modules' directory to prevent unnecessary conflicts.`n" -ForegroundColor DarkYellow
     Remove-Item -Path "node_modules" -Recurse -Force
 }
 
@@ -133,7 +146,7 @@ if (Test-Path -Path "package-lock.json") {
 Write-Host "Enabling corepack" -ForegroundColor Green
 if (-not (Get-Command -Name "corepack" -ErrorAction SilentlyContinue)) {
     # Install npm corepack globally
-    Write-Host "corepack not found, installing corepack via npm" -ForegroundColor Orange
+    Write-Host "corepack not found, installing corepack via npm" -ForegroundColor DarkYellow
     npm install -g corepack
 }
 
@@ -150,4 +163,5 @@ pnpm install
 pnpm run make-i18n
 Write-Host "`n"
 
-Write-Host "Installation of OpenDevin Completed 🚀" -ForegroundColor White
+Write-Host "Installation of OpenDevin Completed" -ForegroundColor Green
+Set-Location $PSScriptRoot
