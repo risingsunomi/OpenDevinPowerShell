@@ -9,6 +9,9 @@ Write-Host @"
 # github.com/risingsunomi/OpenDevinPowerShell #
 ###############################################
 "@ -ForegroundColor Cyan
+
+$psScriptPath = $PSScriptRoot
+
 $confirmInstall = Read-Host "Proceed? (yes/no)"
 if ($confirmInstall -ne "yes") {
     Write-Host "!! Installation aborted. Exiting." -ForegroundColor Red
@@ -79,25 +82,18 @@ elseif ($llmEmbeddingModel -eq "azureopenai") {
 Write-Host "Enter your workspace directory or leave blank"
 Write-Host "For windows, please specify the full path"
 $workspaceDir = Read-Host "> "
-if($null -eq $workspaceDir -or $workspaceDir -eq "") {
-    # set workspace dir to OpenDevin/workspace
-    $currentPath = $PSScriptRoot
-    $additionalPath = "opendevin_env/OpenDevin/workspace"
-    $workspaceDir = Join-Path -Path $currentPath -ChildPath $additionalPath
-    if (!(Test-Path -Path $workspaceDir)) {
-        # Create the folder if it doesn't exist
-        Write-Host "Creating workspace directory at $workspaceDir" -ForegroundColor DarkYellow
-        New-Item -ItemType Directory -Path $workspaceDir | Out-Null
-    }
-}
 
-$configFile = "config.toml"
+$configPath = Join-Path -Path $psScriptPath -ChildPath "opendevin_env/OpenDevin"
+$configFile = "$configPath/config.toml"
 $content = @"
 LLM_MODEL="$llmModel"
-LLM_API_KEY="$llmApiKey"
+$(if($llmApiKey -ne "" -or $null -ne $llmApiKey) {
+    "LLM_API_KEY=`"$llmApiKey`""
+})
 LLM_EMBEDDING_MODEL="$llmEmbeddingModel"
 $(if($workspaceDir -ne "" -or $null -ne $workspaceDir) {
-    "WORKSPACE_DIR=`"$workspaceDir`""
+    $workspaceDirEscaped = $workspaceDir -replace '\\', '\\'
+    "WORKSPACE_DIR=`"$workspaceDirEscaped`""
 })
 $(if ($llmEmbeddingModel -eq "llama2" -or $llmEmbeddingModel -eq "azureopenai") {
     "LLM_BASE_URL=`"$llmBaseUrl`""
@@ -108,10 +104,21 @@ LLM_API_VERSION=`"$llmApiVersion`"
 LLM_BASE_URL=`"$llmBaseUrl`""
 })
 "@
-
+Write-Host "Saving $configFile"
 [System.IO.File]::WriteAllLines($configFile, $content)
-
 Write-Host "`n"
+
+# create workspace folder if needed
+if($null -eq $workspaceDir -or $workspaceDir -eq "") {
+    # set workspace dir to OpenDevin/workspace
+    $additionalPath = "opendevin_env/OpenDevin/workspace"
+    $workspaceDir = Join-Path -Path $psScriptPath -ChildPath $additionalPath
+    if (!(Test-Path -Path $workspaceDir)) {
+        # Create the folder if it doesn't exist
+        Write-Host "Creating workspace directory at $workspaceDir" -ForegroundColor DarkYellow
+        New-Item -ItemType Directory -Path $workspaceDir | Out-Null
+    }
+}
 
 # Pull the Docker image
 Write-Host "Pulling docker image ghcr.io/opendevin/sandbox`n" -ForegroundColor Green

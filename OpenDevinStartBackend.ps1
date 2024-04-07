@@ -9,6 +9,7 @@ Write-Host @"
 # github.com/risingsunomi/OpenDevinPowerShell #
 ###############################################
 "@ -ForegroundColor Cyan
+
 $confirmInstall = Read-Host "Proceed? (yes/no)"
 if ($confirmInstall -ne "yes") {
     Write-Host "!! Installation aborted. Exiting." -ForegroundColor Red
@@ -40,18 +41,6 @@ if (Test-Path $projFolder) {
     Write-Host "The $projFolder folder not found. Please run the installation before using this script. Exiting." -ForegroundColor Red
     exit
 }
-
-# Read the config.toml file
-Write-Host "Setting Windows environment variables from config.toml" -ForegroundColor Green
-$configFile = "config.toml"
-$configContent = Get-Content -Path $configFile -Raw
-$config = ConvertFrom-StringData -StringData $configContent
-
-# Set the environment variables
-$env:LLM_MODEL = $config.LLM_MODEL
-$env:LLM_API_KEY = $config.LLM_API_KEY
-$env:WORKSPACE_DIR = $config.WORKSPACE_DIR
-$env:LLM_EMBEDDING_MODEL = $config.LLM_EMBEDDING_MODEL
 
 # Check if Docker daemon is running
 # backend controller will crash if docker is not running
