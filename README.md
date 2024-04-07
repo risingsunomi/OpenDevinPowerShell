@@ -3,6 +3,12 @@ Collection of PowerShell scripts for running [OpenDevin](https://github.com/Open
 
 See [OpenDevin Requirements](https://github.com/OpenDevin/OpenDevin?tab=readme-ov-file#-get-started)
 
+## Usage
+- Run the **OpenDevinWindowsInstall.ps1** install script in a Admin level PowerShell terminal
+- After install is complete, open two non-admin level PowerShell terminals
+- - Run OpenDevinStartBackend.ps1 in one terminal
+- - Run OpenDevinStartFrontend.ps1 in the other terminal
+
 ## Issues
 ### Current Known Issues (as of 4/6/2024)
 - Workspace dir needs to be the full path. Pathlib doesn't work well with "./workspace" on Windows
