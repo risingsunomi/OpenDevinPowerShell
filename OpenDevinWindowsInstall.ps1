@@ -78,6 +78,17 @@ elseif ($llmEmbeddingModel -eq "azureopenai") {
 Write-Host "Enter your workspace directory or leave blank"
 Write-Host "For windows, please specify the full path"
 $workspaceDir = Read-Host "> "
+if($null -eq $workspaceDir -or $workspaceDir -eq "") {
+    # set workspace dir to OpenDevin/workspace
+    $currentPath = $PSScriptRoot
+    $additionalPath = "opendevin_env/OpenDevin/workspace"
+    $workspaceDir = Join-Path -Path $currentPath -ChildPath $additionalPath
+    if (!(Test-Path -Path $workspaceDir)) {
+        # Create the folder if it doesn't exist
+        Write-Host "Creating workspace directory at $workspaceDir" -ForegroundColor DarkYellow
+        New-Item -ItemType Directory -Path $workspaceDir | Out-Null
+    }
+}
 
 $configFile = "config.toml"
 @"
@@ -96,7 +107,7 @@ LLM_API_VERSION=`"$llmApiVersion`"
 LLM_BASE_URL=`"$llmBaseUrl`""
 })
 
-"@ | Out-File -FilePath $configFile -Encoding UTF8NoBOM
+"@ | Out-File -FilePath $configFile -Encoding unicode
 
 Write-Host "`n"
 
