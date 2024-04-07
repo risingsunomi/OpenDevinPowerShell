@@ -91,7 +91,7 @@ if($null -eq $workspaceDir -or $workspaceDir -eq "") {
 }
 
 $configFile = "config.toml"
-@"
+$content = @"
 LLM_MODEL="$llmModel"
 LLM_API_KEY="$llmApiKey"
 LLM_EMBEDDING_MODEL="$llmEmbeddingModel"
@@ -106,8 +106,9 @@ $(if ($llmEmbeddingModel -eq "azureopenai") {
 LLM_API_VERSION=`"$llmApiVersion`"
 LLM_BASE_URL=`"$llmBaseUrl`""
 })
+"@
 
-"@ | Out-File -FilePath $configFile -Encoding unicode
+[System.IO.File]::WriteAllLines($configFile, $content)
 
 Write-Host "`n"
 
@@ -145,12 +146,12 @@ if (-not (Get-Command -Name "corepack" -ErrorAction SilentlyContinue)) {
 # Enable corepack (requires administrator privileges)
 corepack enable
 
-# Change the execution policy to allow running pnpm
+# Change the execution policy to allow running npm
 Write-Host "Setting ExecutionPolicy to RemoteSigned for pnpm install" -ForegroundColor Green
 Set-ExecutionPolicy RemoteSigned -Scope Process -Force
 
-# Install dependencies using pnpm and run make-i18n
-Write-Host "Running pnpm install and run make-i18n`n" -ForegroundColor Green
+# Install dependencies using npm and run make-i18n
+Write-Host "Running npm install and run make-i18n`n" -ForegroundColor Green
 npm install
 npm run make-i18n
 Write-Host "`n"
