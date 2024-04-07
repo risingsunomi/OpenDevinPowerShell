@@ -134,14 +134,6 @@ poetry run pre-commit install --config ./dev_config/python/.pre-commit-config.ya
 Write-Host "Setting up frontend" -ForegroundColor Green
 Set-Location frontend
 
-# Check if package-lock.json exists
-if (Test-Path -Path "package-lock.json") {
-    Write-Host "`nThis project currently uses 'pnpm' for dependency management. It has detected that dependencies were previously installed using 'npm' and has automatically deleted the 'node_modules' directory to prevent unnecessary conflicts.`n" -ForegroundColor DarkYellow
-    if (Test-Path -Path "node_modules") {
-        Remove-Item -Path "node_modules" -Recurse -Force
-    }
-}
-
 # Check if npm corepack is installed
 Write-Host "Enabling corepack" -ForegroundColor Green
 if (-not (Get-Command -Name "corepack" -ErrorAction SilentlyContinue)) {
