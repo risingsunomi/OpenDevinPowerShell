@@ -39,6 +39,7 @@ if (Test-Path $envFolder) {
     python -m venv opendevin_env
     Set-Location $envFolder
 }
+Write-Host "`n"
 
 Write-Host "Activating the virtual environment`n" -ForegroundColor Green
 .\Scripts\Activate.ps1
@@ -147,7 +148,7 @@ if (-not (Get-Command -Name "corepack" -ErrorAction SilentlyContinue)) {
 corepack enable
 
 # Change the execution policy to allow running npm
-Write-Host "Setting ExecutionPolicy to RemoteSigned for pnpm install" -ForegroundColor Green
+Write-Host "Setting ExecutionPolicy to RemoteSigned for npm install" -ForegroundColor Green
 Set-ExecutionPolicy RemoteSigned -Scope Process -Force
 
 # Install dependencies using npm and run make-i18n
