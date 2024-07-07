@@ -10,6 +10,13 @@ See [OpenDevin Requirements](https://github.com/OpenDevin/OpenDevin?tab=readme-o
     - Run **OpenDevinStartFrontend.ps1** in the other terminal
 
 ## Issues
+### Major Stopping Issue (07/07/2024)
+
+**Backend server will not start**
+
+pexpect python library is [not supported on Windows](https://github.com/pexpect/pexpect/issues/339) and will need to be fixed on OpenDevin repo. 
+
+
 ### Current Known Issues (as of 4/6/2024)
 - Workspace dir needs to be the full path. Pathlib doesn't work well with "./workspace" on Windows
 - You will need to change directory manually back to where the PS scripts are if you CRTL-C the frontend or backend
