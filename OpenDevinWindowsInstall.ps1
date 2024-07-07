@@ -34,6 +34,7 @@ function Get-FullPath {
 $defaultModel = "gpt-4o"
 $pythonVersion = python --version
 $envFolder = Get-FullPath -relativePath "opendevin_env"
+$openDevinBase = Get-FullPath -relativePath "opendevin_env/OpenDevin"
 $defaultWorkspaceDir = Get-FullPath -relativePath "opendevin_env/OpenDevin/workspace"
 $defaultCache = Get-FullPath -relativePath "opendevin_env/OpenDevin/opendevin/.cache"
 $configFile = Get-FullPath -relativePath "opendevin_env/OpenDevin/config.toml"
@@ -98,7 +99,7 @@ Write-Host "Activating the virtual environment" -ForegroundColor Green
 ##########################
 
 Write-Host "Cloning the OpenDevin project from github.com/OpenDevin/OpenDevin via HTTPS" -ForegroundColor Green
-if (Test-Path "$envFolder/OpenDevin") {
+if (Test-Path $openDevinBase) {
     Write-Host "OpenDevin project already cloned. Skipping."
 } else {
     git clone https://github.com/OpenDevin/OpenDevin.git
@@ -274,9 +275,10 @@ npm run make-i18n
 ###############
 # clear cache #
 ###############
-
-Write-Host "Cleaning cache `"$defaultCache`"" -ForegroundColor DarkYellow
-Remove-Item -LiteralPath $defaultCache -Force -Recurse
+if (Test-Path $defaultCache) {
+    Write-Host "Cleaning cache `"$defaultCache`"" -ForegroundColor DarkYellow
+    Remove-Item -LiteralPath $defaultCache -Force -Recurse
+}
 
 #######
 # end #
