@@ -32,11 +32,11 @@ function Get-FullPath {
 # --- script variables --- #
 
 $defaultModel = "gpt-4o"
-$psScriptPath = $PSScriptRoot
 $pythonVersion = python --version
 $envFolder = Get-FullPath -relativePath "opendevin_env"
-$defaultWorkspaceDir = "$envFolder/OpenDevin/workspace"
-$defaultCache = "$envFolder/OpenDevin/opendevin/.cache"
+$defaultWorkspaceDir = Get-FullPath -relativePath "opendevin_env/OpenDevin/workspace"
+$defaultCache = Get-FullPath -relativePath "opendevin_env/OpenDevin/opendevin/.cache"
+$configFile = Get-FullPath -relativePath "opendevin_env/OpenDevin/config.toml"
 
 
 # --- script --- #
@@ -142,7 +142,6 @@ try {
         $presistSandbox = "false"
     }
 } catch [System.FormatException] {
-    Write-Host "Defaulting presistant_sanbox to false"
     $presistSandbox = "false"
 }
 
@@ -188,8 +187,7 @@ elseif ($llmEmbeddingModel -eq "azureopenai") {
 # create config file #
 ######################
 
-$configPath = Join-Path -Path $psScriptPath -ChildPath "opendevin_env/OpenDevin"
-$configFile = "$configPath/config.toml"
+
 $content = @"
 [core]
 workspace_dir=`"$workspaceBase`"
