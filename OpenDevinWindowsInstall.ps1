@@ -1,11 +1,45 @@
-# System Variables
+###############################################
+#          OpenDevin Windows Install          #
+#                                             #
+#        Created for Windows 10 and 11        #
+#                                             #
+#        github.com/OpenDevin/OpenDevin       #
+#                                             #
+# github.com/risingsunomi/OpenDevinPowerShell #
+###############################################
+
+# --- helper functions ---- #
+
+# Get-FullPath
+# return full path to folder relative to powershell script
+function Get-FullPath {
+    param (
+        [string]$relativePath
+    )
+
+    if ([System.IO.Path]::IsPathRooted($relativePath)) {
+        $fullPath = $relativePath
+    } else {
+        $fullPath = Join-Path -Path $PSScriptRoot -ChildPath $relativePath
+    }
+
+    # Escape backslashes
+    $escapedPath = $fullPath -replace '\\', '\\'
+
+    Write-Output $escapedPath
+}
+
+# --- script variables --- #
 
 $defaultModel = "gpt-4o"
 $psScriptPath = $PSScriptRoot
 $pythonVersion = python --version
-$envFolder = "opendevin_env"
-$defaultWorkspaceDir = "opendevin_env/OpenDevin/workspace"
+$envFolder = Get-FullPath -relativePath "opendevin_env"
+$defaultWorkspaceDir = "$envFolder/OpenDevin/workspace"
+$defaultCache = "$envFolder/OpenDevin/opendevin/.cache"
 
+
+# --- script --- #
 
 Write-Host @"
 ###############################################
@@ -24,43 +58,58 @@ if ($confirmInstall -ne "yes") {
     Write-Host "!! Installation aborted. Exiting." -ForegroundColor Red
     exit
 }
-Write-Host "`n"
 
-# Check if running as admin
+#############################
+# check if running as admin #
+#############################
+
 if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     Write-Host "!! Please run this PowerShell script in an administrator PowerShell window to perform needed operations. Exiting." -ForegroundColor Red
     exit
 }
 
-# Check Python version
+########################
+# check python version #
+########################
+
 if ($pythonVersion -notmatch "Python 3\.[1-9][1-9]") {
     Write-Host "!! Python version 3.11 or higher is required. Please install the correct version and try again. Exiting." -ForegroundColor Red
     exit
 }
 
-# Create a Python virtual environment
+##########################
+# create opendevin pyenv #
+##########################
+
 Write-Host "Creating and activating a Python virtual environment called 'opendevin_env'" -ForegroundColor Green
 if (Test-Path $envFolder) {
     Write-Host "The 'opendevin_env' folder already exists. Skipping virtual environment creation."
-    Set-Location $envFolder
 } else {
     python -m venv opendevin_env
-    Set-Location $envFolder
 }
-Write-Host "`n"
+Set-Location $envFolder
 
-Write-Host "Activating the virtual environment`n" -ForegroundColor Green
+Write-Host "Activating the virtual environment" -ForegroundColor Green
 .\Scripts\Activate.ps1
-Write-Host "`n"
 
-# Clone the project in the virtual environment folder
-Write-Host "Cloning the OpenDevin project from github.com/OpenDevin/OpenDevin via HTTPS`n" -ForegroundColor Green
-git clone https://github.com/OpenDevin/OpenDevin.git
+
+##########################
+# clone opendevin github #
+##########################
+
+Write-Host "Cloning the OpenDevin project from github.com/OpenDevin/OpenDevin via HTTPS" -ForegroundColor Green
+if (Test-Path "$envFolder/OpenDevin") {
+    Write-Host "OpenDevin project already cloned. Skipping."
+} else {
+    git clone https://github.com/OpenDevin/OpenDevin.git
+}
 Set-Location OpenDevin
-Write-Host "`n"
 
-# setup configuration toml
-Write-Host "Setting up config.toml`n" -ForegroundColor Green
+##############
+# setup toml #
+##############
+
+Write-Host "Setting up config.toml" -ForegroundColor Green
 
 ###############
 # core config #
@@ -69,6 +118,8 @@ Write-Host "Setting up config.toml`n" -ForegroundColor Green
 $workspaceBase = Read-Host "Enter your workspace directory (as absolute path) or press enter for default [default: $defaultWorkspaceDir]"
 if($workspaceBase -eq "") {
     $workspaceBase = $defaultWorkspaceDir;
+} else {
+    $workspaceBase = Get-FullPath -relativePath $workspaceBase;
 }
 
 # create workspace folder if needed
@@ -85,12 +136,14 @@ try {
     $presistSandbox = [System.Convert]::ToBoolean($presistSandbox)
     if ($presistSandbox -eq $true) {
         $sshPassword = Read-Host "Enter a password for the sandbox container"
+        $presistSandbox = "true"
     } else {
         $sshPassword = ""
+        $presistSandbox = "false"
     }
 } catch [System.FormatException] {
     Write-Host "Defaulting presistant_sanbox to false"
-    $presistSandbox = $false
+    $presistSandbox = "false"
 }
 
 ##############
@@ -131,12 +184,16 @@ elseif ($llmEmbeddingModel -eq "azureopenai") {
     $llmEmbeddingModel = "BAAI/bge-small-en-v1.5"
 }
 
+######################
+# create config file #
+######################
+
 $configPath = Join-Path -Path $psScriptPath -ChildPath "opendevin_env/OpenDevin"
 $configFile = "$configPath/config.toml"
 $content = @"
 [core]
-workspace_dir=`"$workspaceDirEscaped`"
-persist_sandbox=`"$presistSandbox`"
+workspace_dir=`"$workspaceBase`"
+persist_sandbox=$presistSandbox
 ssh_password=`"$sshPassword`"
 
 [llm]
@@ -150,32 +207,46 @@ api_version=`"$llmApiVersion`"
 "@
 Write-Host "Saving $configFile"
 [System.IO.File]::WriteAllLines($configFile, $content)
-Write-Host "`n"
 
-# Pull the Docker image
-Write-Host "Pulling docker image ghcr.io/opendevin/sandbox`n" -ForegroundColor Green
+#######################
+# pull sandbox docker #
+#######################
+
+Write-Host "Pulling docker image ghcr.io/opendevin/sandbox" -ForegroundColor Green
 docker pull ghcr.io/opendevin/sandbox
-Write-Host "`n"
 
-# Install Poetry
+##################
+# install poetry #
+##################
+
 Write-Host "Installing poetry with pip" -ForegroundColor Green
 pip install poetry
-Write-Host "`n"
 
-# Install dependencies using Poetry (without evaluation)
-Write-Host "Starting poetry install of dependencies`n" -ForegroundColor Green
+###############################
+# install python dependencies #
+###############################
+
+Write-Host "Starting poetry install of dependencies" -ForegroundColor Green
 poetry install --without evaluation
-Write-Host "`n"
 
-# Install pre-commit hooks
-Write-Host "Installing git pre-commit hooks via poetry`n" -ForegroundColor Green
+############################
+# install pre-commit hooks #
+############################
+
+Write-Host "Installing git pre-commit hooks via poetry" -ForegroundColor Green
 poetry run pre-commit install --config ./dev_config/python/.pre-commit-config.yaml
 
-# Change to the frontend directory
+####################################
+# change to the frontend directory #
+####################################
+
 Write-Host "Setting up frontend" -ForegroundColor Green
 Set-Location frontend
 
-# Check if npm corepack is installed
+######################################
+# check if npm corepack is installed #
+######################################
+
 Write-Host "Enabling corepack" -ForegroundColor Green
 if (-not (Get-Command -Name "corepack" -ErrorAction SilentlyContinue)) {
     # Install npm corepack globally
@@ -183,18 +254,35 @@ if (-not (Get-Command -Name "corepack" -ErrorAction SilentlyContinue)) {
     npm install -g corepack
 }
 
-# Enable corepack (requires administrator privileges)
+#######################################
+# enable corepack                     #
+# (requires administrator privileges) #
+#######################################
+
 corepack enable
+
+############################
+# install NPM dependencies #
+############################
 
 # Change the execution policy to allow running npm
 Write-Host "Setting ExecutionPolicy to RemoteSigned for npm install" -ForegroundColor Green
 Set-ExecutionPolicy RemoteSigned -Scope Process -Force
 
-# Install dependencies using npm and run make-i18n
-Write-Host "Running npm install and run make-i18n`n" -ForegroundColor Green
+Write-Host "Running npm install and run make-i18n" -ForegroundColor Green
 npm install
 npm run make-i18n
-Write-Host "`n"
+
+###############
+# clear cache #
+###############
+
+Write-Host "Cleaning cache `"$defaultCache`"" -ForegroundColor DarkYellow
+Remove-Item -LiteralPath $defaultCache -Force -Recurse
+
+#######
+# end #
+#######
 
 Write-Host "Installation of OpenDevin Completed" -ForegroundColor Green
 Set-Location $PSScriptRoot
