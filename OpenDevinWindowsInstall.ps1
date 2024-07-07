@@ -1,3 +1,12 @@
+# System Variables
+
+$defaultModel = "gpt-4o"
+$psScriptPath = $PSScriptRoot
+$pythonVersion = python --version
+$envFolder = "opendevin_env"
+$defaultWorkspaceDir = "opendevin_env/OpenDevin/workspace"
+
+
 Write-Host @"
 ###############################################
 #          OpenDevin Windows Install          #
@@ -9,8 +18,6 @@ Write-Host @"
 # github.com/risingsunomi/OpenDevinPowerShell #
 ###############################################
 "@ -ForegroundColor Cyan
-
-$psScriptPath = $PSScriptRoot
 
 $confirmInstall = Read-Host "Proceed? (yes/no)"
 if ($confirmInstall -ne "yes") {
@@ -26,7 +33,6 @@ if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 }
 
 # Check Python version
-$pythonVersion = python --version
 if ($pythonVersion -notmatch "Python 3\.[1-9][1-9]") {
     Write-Host "!! Python version 3.11 or higher is required. Please install the correct version and try again. Exiting." -ForegroundColor Red
     exit
@@ -34,7 +40,6 @@ if ($pythonVersion -notmatch "Python 3\.[1-9][1-9]") {
 
 # Create a Python virtual environment
 Write-Host "Creating and activating a Python virtual environment called 'opendevin_env'" -ForegroundColor Green
-$envFolder = "opendevin_env"
 if (Test-Path $envFolder) {
     Write-Host "The 'opendevin_env' folder already exists. Skipping virtual environment creation."
     Set-Location $envFolder
@@ -57,7 +62,29 @@ Write-Host "`n"
 # setup configuration toml
 Write-Host "Setting up config.toml`n" -ForegroundColor Green
 
-$defaultModel = "text-davinci-003"
+###############
+# core config #
+###############
+
+$workspaceBase = Read-Host "Enter your workspace directory (as absolute path) [default: $defaultWorkspaceBase]"
+
+$presistantSandbox = Read-Host "Do you want to persist the sandbox container? [true/false] [default: false]"
+try {
+    $presistantSandbox = [System.Convert]::ToBoolean($presistantSandbox)
+    if ($presistantSandbox -eq $true) {
+        $sshPassword = Read-Host "Enter a password for the sandbox container"
+    } else {
+        $sshPassword = $null
+    }
+} catch [System.FormatException] {
+    Write-Host "Defaulting presistant_sanbox to false"
+    $presistantSandbox = $false
+}
+
+##############
+# llm config #
+##############
+
 $llmModel = Read-Host "Enter your LLM Model name (see https://docs.litellm.ai/docs/providers for full list) [default: $defaultModel]"
 $llmModel = ($llmModel | Where-Object { $_ -eq "" })
 if ($null -eq $llmModel -or $llmModel -eq "") {
@@ -65,13 +92,23 @@ if ($null -eq $llmModel -or $llmModel -eq "") {
 }
 
 $llmApiKey = Read-Host "Enter your LLM API key, if any"
+$llmBaseUrl = Read-Host "Enter your LLM base URL (mostly used for local LLMs, leave blank if not needed - example: http://localhost:5001/v1/)"
 
 Write-Host "Enter your LLM Embedding Model"
-Write-Host "Choices are openai, azureopenai, llama2 or leave blank to default to 'BAAI/bge-small-en-v1.5' via huggingface"
+Write-Host "Choices are: 
+- openai
+- azureopenai
+- Embeddings available only with OllamaEmbedding:
+    - llama2
+    - mxbai-embed-large
+    - nomic-embed-text
+    - all-minilm
+    - stable-code
+- Leave blank to default to 'BAAI/bge-small-en-v1.5' via"
 $llmEmbeddingModel = Read-Host "> "
 
-if ($llmEmbeddingModel -eq "llama2") {
-    $llmBaseUrl = Read-Host "Enter the local model URL"
+if ($llmEmbeddingModel -eq "llama2" -or $llmEmbeddingModel -eq "mxbai-embed-large" -or $llmEmbeddingModel -eq "nomic-embed-text" -or $llmEmbeddingModel -eq "all-minilm" -or $llmEmbeddingModel -eq "stable-code") {
+    $llmEmbeddingBaseUrl = Read-Host "Enter the local model URL for the embedding model (will set llm.embedding_base_url)"
 }
 elseif ($llmEmbeddingModel -eq "azureopenai") {
     $llmBaseUrl = Read-Host "Enter the Azure endpoint URL"
