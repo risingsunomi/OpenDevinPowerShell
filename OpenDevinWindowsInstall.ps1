@@ -150,8 +150,6 @@ Write-Host "Saving $configFile"
 [System.IO.File]::WriteAllLines($configFile, $content)
 Write-Host "`n"
 
-
-
 # Pull the Docker image
 Write-Host "Pulling docker image ghcr.io/opendevin/sandbox`n" -ForegroundColor Green
 docker pull ghcr.io/opendevin/sandbox
