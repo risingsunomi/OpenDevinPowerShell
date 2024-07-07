@@ -66,19 +66,31 @@ Write-Host "Setting up config.toml`n" -ForegroundColor Green
 # core config #
 ###############
 
-$workspaceBase = Read-Host "Enter your workspace directory (as absolute path) [default: $defaultWorkspaceBase]"
+$workspaceBase = Read-Host "Enter your workspace directory (as absolute path) or press enter for default [default: $defaultWorkspaceBase]"
+if($workspaceBase -eq "") {
+    $workspaceBase = $defaultWorkspaceBase;
+}
 
-$presistantSandbox = Read-Host "Do you want to persist the sandbox container? [true/false] [default: false]"
+# create workspace folder if needed
+if($null -eq $workspaceBase -or $workspaceBase -eq "") {
+    if (!(Test-Path -Path $workspaceBase)) {
+        # Create the folder if it doesn't exist
+        Write-Host "Creating workspace directory at $workspaceBase" -ForegroundColor DarkYellow
+        New-Item -ItemType Directory -Path $workspaceBase | Out-Null
+    }
+}
+
+$presistSandbox = Read-Host "Do you want to persist the sandbox container? [true/false] [default: false]"
 try {
-    $presistantSandbox = [System.Convert]::ToBoolean($presistantSandbox)
-    if ($presistantSandbox -eq $true) {
+    $presistSandbox = [System.Convert]::ToBoolean($presistSandbox)
+    if ($presistSandbox -eq $true) {
         $sshPassword = Read-Host "Enter a password for the sandbox container"
     } else {
-        $sshPassword = $null
+        $sshPassword = ""
     }
 } catch [System.FormatException] {
     Write-Host "Defaulting presistant_sanbox to false"
-    $presistantSandbox = $false
+    $presistSandbox = $false
 }
 
 ##############
@@ -91,8 +103,9 @@ if ($null -eq $llmModel -or $llmModel -eq "") {
     $llmModel = $defaultModel
 }
 
-$llmApiKey = Read-Host "Enter your LLM API key, if any"
-$llmBaseUrl = Read-Host "Enter your LLM base URL (mostly used for local LLMs, leave blank if not needed - example: http://localhost:5001/v1/)"
+$llmAPIKey = Read-Host "Enter your LLM API key, press enter if none"
+
+$llmBaseUrl = Read-Host "Enter your LLM base URL (mostly used for local LLMs, press enter if not needed - example: http://localhost:5001/v1/)"
 
 Write-Host "Enter your LLM Embedding Model"
 Write-Host "Choices are: 
@@ -116,46 +129,28 @@ elseif ($llmEmbeddingModel -eq "azureopenai") {
     $llmApiVersion = Read-Host "Enter the Azure API Version"
 }
 
-Write-Host "Enter your workspace directory or leave blank"
-Write-Host "For windows, please specify the full path"
-$workspaceDir = Read-Host "> "
-
 $configPath = Join-Path -Path $psScriptPath -ChildPath "opendevin_env/OpenDevin"
 $configFile = "$configPath/config.toml"
 $content = @"
-LLM_MODEL="$llmModel"
-$(if($llmApiKey -ne "" -or $null -ne $llmApiKey) {
-    "LLM_API_KEY=`"$llmApiKey`""
-})
-LLM_EMBEDDING_MODEL="$llmEmbeddingModel"
-$(if($workspaceDir -ne "" -or $null -ne $workspaceDir) {
-    $workspaceDirEscaped = $workspaceDir -replace '\\', '\\'
-    "WORKSPACE_DIR=`"$workspaceDirEscaped`""
-})
-$(if ($llmEmbeddingModel -eq "llama2" -or $llmEmbeddingModel -eq "azureopenai") {
-    "LLM_BASE_URL=`"$llmBaseUrl`""
-})
-$(if ($llmEmbeddingModel -eq "azureopenai") {
-    "LLM_DEPLOYMENT_NAME=`"$llmDeploymentName`"
-LLM_API_VERSION=`"$llmApiVersion`"
-LLM_BASE_URL=`"$llmBaseUrl`""
-})
+[core]
+workspace_dir=`"$workspaceDirEscaped`"
+persist_sandbox=`"$presistSandbox`"
+ssh_password=`"$sshPassword`"
+
+[llm]
+model=`"$llmModel`"
+api_key=`"$llmAPIKey`"
+base_url=`"$llmBaseUrl`"
+llm_embedding_model=`"$llmEmbeddingModel`"
+embedding_base_url=`"$embeddingBaseUrl`"
+embedding_deploment_name=`"$llmDeploymentName`"
+api_version=`"$llmApiVersion`"
 "@
 Write-Host "Saving $configFile"
 [System.IO.File]::WriteAllLines($configFile, $content)
 Write-Host "`n"
 
-# create workspace folder if needed
-if($null -eq $workspaceDir -or $workspaceDir -eq "") {
-    # set workspace dir to OpenDevin/workspace
-    $additionalPath = "opendevin_env/OpenDevin/workspace"
-    $workspaceDir = Join-Path -Path $psScriptPath -ChildPath $additionalPath
-    if (!(Test-Path -Path $workspaceDir)) {
-        # Create the folder if it doesn't exist
-        Write-Host "Creating workspace directory at $workspaceDir" -ForegroundColor DarkYellow
-        New-Item -ItemType Directory -Path $workspaceDir | Out-Null
-    }
-}
+
 
 # Pull the Docker image
 Write-Host "Pulling docker image ghcr.io/opendevin/sandbox`n" -ForegroundColor Green
