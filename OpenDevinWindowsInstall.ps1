@@ -66,9 +66,9 @@ Write-Host "Setting up config.toml`n" -ForegroundColor Green
 # core config #
 ###############
 
-$workspaceBase = Read-Host "Enter your workspace directory (as absolute path) or press enter for default [default: $defaultWorkspaceBase]"
+$workspaceBase = Read-Host "Enter your workspace directory (as absolute path) or press enter for default [default: $defaultWorkspaceDir]"
 if($workspaceBase -eq "") {
-    $workspaceBase = $defaultWorkspaceBase;
+    $workspaceBase = $defaultWorkspaceDir;
 }
 
 # create workspace folder if needed
@@ -117,7 +117,7 @@ Write-Host "Choices are:
     - nomic-embed-text
     - all-minilm
     - stable-code
-- Leave blank to default to 'BAAI/bge-small-en-v1.5' via"
+- Leave blank to default to 'BAAI/bge-small-en-v1.5' via huggingface"
 $llmEmbeddingModel = Read-Host "> "
 
 if ($llmEmbeddingModel -eq "llama2" -or $llmEmbeddingModel -eq "mxbai-embed-large" -or $llmEmbeddingModel -eq "nomic-embed-text" -or $llmEmbeddingModel -eq "all-minilm" -or $llmEmbeddingModel -eq "stable-code") {
@@ -127,6 +127,8 @@ elseif ($llmEmbeddingModel -eq "azureopenai") {
     $llmBaseUrl = Read-Host "Enter the Azure endpoint URL"
     $llmDeploymentName = Read-Host "Enter the Azure LLM Deployment Name"
     $llmApiVersion = Read-Host "Enter the Azure API Version"
+} else {
+    $llmEmbeddingModel = "BAAI/bge-small-en-v1.5"
 }
 
 $configPath = Join-Path -Path $psScriptPath -ChildPath "opendevin_env/OpenDevin"
@@ -142,7 +144,7 @@ model=`"$llmModel`"
 api_key=`"$llmAPIKey`"
 base_url=`"$llmBaseUrl`"
 llm_embedding_model=`"$llmEmbeddingModel`"
-embedding_base_url=`"$embeddingBaseUrl`"
+embedding_base_url=`"$llmEmbeddingBaseUrl`"
 embedding_deploment_name=`"$llmDeploymentName`"
 api_version=`"$llmApiVersion`"
 "@
